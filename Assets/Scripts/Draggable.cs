@@ -7,6 +7,10 @@ public class Draggable : MonoBehaviour
     private Collider2D _blockCollider;
     private Collider2D[] _allEnvironmentColliders;
 
+    [Header("Glow Settings")]
+    public GameObject glowEffect;
+    private bool _hasBeenTouched = false;
+
     void Start()
     {
         _rb = GetComponent<Rigidbody2D>();
@@ -22,6 +26,9 @@ public class Draggable : MonoBehaviour
 
     void OnMouseDown()
     {
+        _hasBeenTouched = true;
+        if (glowEffect != null) glowEffect.SetActive(false);
+        
         // when drag stop all rotation
         _rb.freezeRotation = true;
 
