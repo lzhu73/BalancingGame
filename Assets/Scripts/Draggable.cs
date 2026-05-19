@@ -11,6 +11,9 @@ public class Draggable : MonoBehaviour
     public GameObject glowEffect;
     private bool _hasBeenTouched = false;
 
+    private bool _isDraggingThis = false; 
+    private bool _hasSpawnedNext = false; 
+
     void Start()
     {
         _rb = GetComponent<Rigidbody2D>();
@@ -22,56 +25,130 @@ public class Draggable : MonoBehaviour
         {
             _allEnvironmentColliders[i] = envObjects[i].GetComponent<Collider2D>();
         }
+
+        Debug.Log($"[Spawner] {gameObject.name} 初始化，主动 Update 检测模式。");
     }
 
-    void OnMouseDown()
+    // void Update()
+    // {
+    //     if (Input.GetMouseButtonDown(0))
+    //     {
+    //         // isolate UI
+    //         if (UnityEngine.EventSystems.EventSystem.current != null && 
+    //             UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject()) return;
+
+    //         if (!_isDraggingThis)
+    //         {
+    //             Vector2 mousePos = GetMouseWorldPos();
+
+
+    //             if (_blockCollider != null && _blockCollider.OverlapPoint(mousePos))
+    //             {
+    //                 Debug.Log($"<color=green>[Active Click Success] 检测到 {gameObject.name}！开始拖拽。</color>");
+    //                 StartDrag();
+    //             }
+    //         }
+    //     }
+
+    //     // dragging
+    //     if (_isDraggingThis && _joint != null)
+    //     {
+    //         _joint.target = GetMouseWorldPos();
+    //     }
+
+    //     // mouse up
+    //     if (Input.GetMouseButtonUp(0) && _isDraggingThis)
+    //     {
+    //         Debug.Log($"[Active Click Release] {gameObject.name} 释放。");
+    //         ReleaseObject();
+    //     }
+    // }
+
+
+    void Update()
     {
+        // onclick
+        if (Input.GetMouseButtonDown(0))
+        {
+            if (!_isDraggingThis)
+            {
+                Vector2 mousePos = GetMouseWorldPos();
+
+                if (_blockCollider != null && _blockCollider.OverlapPoint(mousePos))
+                {
+                    StartDrag();
+                }
+            }
+        }
+
+        // dragging
+        if (_isDraggingThis && _joint != null)
+        {
+            _joint.target = GetMouseWorldPos();
+        }
+
+        // mouse up
+        if (Input.GetMouseButtonUp(0) && _isDraggingThis)
+        {
+            Debug.Log($"[Active Click Release] {gameObject.name} 释放。");
+            ReleaseObject();
+        }
+    }
+
+    private void StartDrag()
+    {
+        _isDraggingThis = true;
         _hasBeenTouched = true;
         if (glowEffect != null) glowEffect.SetActive(false);
         
-        // when drag stop all rotation
-        _rb.freezeRotation = true;
+        if (_rb != null)
+        {
+            _rb.freezeRotation = true;
+            _rb.WakeUp(); 
+        }
 
-        // when click create a joint
+        if (_joint != null) Destroy(_joint);
+
         _joint = gameObject.AddComponent<TargetJoint2D>();
-        
         _joint.anchor = transform.InverseTransformPoint(GetMouseWorldPos());
-        
         _joint.maxForce = 1000 * _rb.mass;
         _joint.dampingRatio = 1f;
         _joint.frequency = 10f;
 
-        ToggleEnvironmentCollisions(true);
-        // if (_rodCollider != null)
-        // {
-        //     Physics2D.IgnoreCollision(_blockCollider, _rodCollider, true);
-        // }
+        ToggleEnvironmentCollisions(true); //
     }
 
-    void OnMouseDrag()
+    public void ForceRelease()
     {
-        if (_joint != null)
+        ReleaseObject();
+    }
+
+    private void ReleaseObject()
+    {
+        _isDraggingThis = false;
+
+        if (_rb != null)
         {
-            _joint.target = GetMouseWorldPos();
+            _rb.freezeRotation = false;
         }
-    }
-
-    void OnMouseUp()
-    {
-        // when dragging stopped unlock rotation
-        _rb.freezeRotation = false;
         
-        // when not onclick let gravity control box again
         if (_joint != null)
         {
             Destroy(_joint);
+            _joint = null;
         }
 
-        ToggleEnvironmentCollisions(false);
-        // if (_rodCollider != null)
-        // {
-        //     Physics2D.IgnoreCollision(_blockCollider, _rodCollider, false);
-        // }
+        ToggleEnvironmentCollisions(false); //
+
+        if (!_hasSpawnedNext)
+        {
+            _hasSpawnedNext = true;
+            BlockSpawner spawner = FindAnyObjectByType<BlockSpawner>();
+            if (spawner != null)
+            {
+                spawner.SpawnNext();
+            }
+        }
     }
 
     private Vector2 GetMouseWorldPos()
@@ -82,6 +159,8 @@ public class Draggable : MonoBehaviour
 
     void ToggleEnvironmentCollisions(bool ignore)
     {
+        if (_blockCollider == null || _allEnvironmentColliders == null) return;
+
         foreach (var envCollider in _allEnvironmentColliders)
         {
             if (envCollider != null)
@@ -89,5 +168,10 @@ public class Draggable : MonoBehaviour
                 Physics2D.IgnoreCollision(_blockCollider, envCollider, ignore);
             }
         }
+    }
+
+    private void OnDestroy()
+    {
+        ToggleEnvironmentCollisions(false);
     }
 }
