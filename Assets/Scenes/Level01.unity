@@ -701,6 +701,10 @@ PrefabInstance:
       propertyPath: glowEffect
       value: 
       objectReference: {fileID: 309893772}
+    - target: {fileID: -3722551339553918726, guid: ce303a9eebf1b7b4bbfe65801e581097, type: 3}
+      propertyPath: maxHoldTime
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 1601400621485586453, guid: ce303a9eebf1b7b4bbfe65801e581097, type: 3}
       propertyPath: m_LocalPosition.x
       value: 7.5
@@ -934,7 +938,7 @@ GameObject:
   - component: {fileID: 791088431}
   m_Layer: 5
   m_Name: Canvas
-  m_TagString: Untagged
+  m_TagString: Environment
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1083,6 +1087,10 @@ PrefabInstance:
       propertyPath: glowEffect
       value: 
       objectReference: {fileID: 1673461188}
+    - target: {fileID: -3722551339553918726, guid: ce303a9eebf1b7b4bbfe65801e581097, type: 3}
+      propertyPath: maxHoldTime
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 1601400621485586453, guid: ce303a9eebf1b7b4bbfe65801e581097, type: 3}
       propertyPath: m_LocalPosition.x
       value: 7.5
@@ -2708,7 +2716,7 @@ GameObject:
   - component: {fileID: 2102406188}
   m_Layer: 7
   m_Name: BlockSpawner
-  m_TagString: Untagged
+  m_TagString: Environment
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2804,7 +2812,7 @@ GameObject:
   - component: {fileID: 2113118597}
   m_Layer: 5
   m_Name: BalanceBuffer
-  m_TagString: Untagged
+  m_TagString: Environment
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -3035,6 +3043,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5102594705668145933, guid: 42776ea353f92443dbd4782481b29feb, type: 3}
+      propertyPath: maxHoldTime
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 7339892167895511054, guid: 42776ea353f92443dbd4782481b29feb, type: 3}
       propertyPath: m_Color.a
       value: 1
@@ -3115,6 +3127,10 @@ PrefabInstance:
     - target: {fileID: 3659897552521934443, guid: f1a4a100e90214686843c61aec02dce3, type: 3}
       propertyPath: m_SortingOrder
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8385675463365693932, guid: f1a4a100e90214686843c61aec02dce3, type: 3}
+      propertyPath: maxHoldTime
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 8642866973795748285, guid: f1a4a100e90214686843c61aec02dce3, type: 3}
       propertyPath: m_Name

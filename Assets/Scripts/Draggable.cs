@@ -5,11 +5,15 @@ public class Draggable : MonoBehaviour
     private TargetJoint2D _joint;
     private Rigidbody2D _rb;
     private Collider2D _blockCollider;
-    private Collider2D[] _allEnvironmentColliders;
+    private SpriteRenderer _spriteRenderer; 
 
     [Header("Glow Settings")]
     public GameObject glowEffect;
-    private bool _hasBeenTouched = false;
+
+    [Header("Anti Cheating")]
+    public float maxHoldTime = 3.5f; // max holding time
+    private float _currentHoldTimer = 0f; // current holding time
+    private Color _originalColor;
 
     private bool _isDraggingThis = false; 
     private bool _hasSpawnedNext = false; 
@@ -18,52 +22,15 @@ public class Draggable : MonoBehaviour
     {
         _rb = GetComponent<Rigidbody2D>();
         _blockCollider = GetComponent<Collider2D>();
-
-        GameObject[] envObjects = GameObject.FindGameObjectsWithTag("Environment");
-        _allEnvironmentColliders = new Collider2D[envObjects.Length];
-        for (int i = 0; i < envObjects.Length; i++)
+        
+        _spriteRenderer = GetComponent<SpriteRenderer>();
+        if (_spriteRenderer != null)
         {
-            _allEnvironmentColliders[i] = envObjects[i].GetComponent<Collider2D>();
+            _originalColor = _spriteRenderer.color;
         }
 
-        Debug.Log($"[Spawner] {gameObject.name} 初始化，主动 Update 检测模式。");
+        // Debug.Log($"[Spawner] {gameObject.name} 初始化成功。");
     }
-
-    // void Update()
-    // {
-    //     if (Input.GetMouseButtonDown(0))
-    //     {
-    //         // isolate UI
-    //         if (UnityEngine.EventSystems.EventSystem.current != null && 
-    //             UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject()) return;
-
-    //         if (!_isDraggingThis)
-    //         {
-    //             Vector2 mousePos = GetMouseWorldPos();
-
-
-    //             if (_blockCollider != null && _blockCollider.OverlapPoint(mousePos))
-    //             {
-    //                 Debug.Log($"<color=green>[Active Click Success] 检测到 {gameObject.name}！开始拖拽。</color>");
-    //                 StartDrag();
-    //             }
-    //         }
-    //     }
-
-    //     // dragging
-    //     if (_isDraggingThis && _joint != null)
-    //     {
-    //         _joint.target = GetMouseWorldPos();
-    //     }
-
-    //     // mouse up
-    //     if (Input.GetMouseButtonUp(0) && _isDraggingThis)
-    //     {
-    //         Debug.Log($"[Active Click Release] {gameObject.name} 释放。");
-    //         ReleaseObject();
-    //     }
-    // }
-
 
     void Update()
     {
@@ -82,15 +49,35 @@ public class Draggable : MonoBehaviour
         }
 
         // dragging
-        if (_isDraggingThis && _joint != null)
+        if (_isDraggingThis)
         {
-            _joint.target = GetMouseWorldPos();
+            if (_joint != null)
+            {
+                _joint.target = GetMouseWorldPos();
+            }
+
+            // holding time added up
+            _currentHoldTimer += Time.deltaTime;
+
+            // smoothly turnning red
+            if (_spriteRenderer != null)
+            {
+                float progress = _currentHoldTimer / maxHoldTime;
+                // Color.Lerp 渐变颜色
+                _spriteRenderer.color = Color.Lerp(_originalColor, Color.red, progress);
+            }
+
+            // force fall down
+            if (_currentHoldTimer >= maxHoldTime)
+            {
+                Debug.Log($"<color=red>[Anti-Cheat]强制松手！</color>");
+                ReleaseObject();
+            }
         }
 
         // mouse up
         if (Input.GetMouseButtonUp(0) && _isDraggingThis)
         {
-            Debug.Log($"[Active Click Release] {gameObject.name} 释放。");
             ReleaseObject();
         }
     }
@@ -98,7 +85,8 @@ public class Draggable : MonoBehaviour
     private void StartDrag()
     {
         _isDraggingThis = true;
-        _hasBeenTouched = true;
+        _currentHoldTimer = 0f; 
+        
         if (glowEffect != null) glowEffect.SetActive(false);
         
         if (_rb != null)
@@ -115,7 +103,8 @@ public class Draggable : MonoBehaviour
         _joint.dampingRatio = 1f;
         _joint.frequency = 10f;
 
-        ToggleEnvironmentCollisions(true); //
+        // anti collision
+        ToggleEnvironmentCollisions(true);
     }
 
     public void ForceRelease()
@@ -126,6 +115,11 @@ public class Draggable : MonoBehaviour
     private void ReleaseObject()
     {
         _isDraggingThis = false;
+
+        if (_spriteRenderer != null)
+        {
+            _spriteRenderer.color = _originalColor;
+        }
 
         if (_rb != null)
         {
@@ -138,7 +132,8 @@ public class Draggable : MonoBehaviour
             _joint = null;
         }
 
-        ToggleEnvironmentCollisions(false); //
+        // collision back
+        ToggleEnvironmentCollisions(false);
 
         if (!_hasSpawnedNext)
         {
@@ -159,19 +154,21 @@ public class Draggable : MonoBehaviour
 
     void ToggleEnvironmentCollisions(bool ignore)
     {
-        if (_blockCollider == null || _allEnvironmentColliders == null) return;
+        if (_blockCollider == null) return;
 
-        foreach (var envCollider in _allEnvironmentColliders)
+        // tag Environment
+        GameObject[] envObjects = GameObject.FindGameObjectsWithTag("Environment");
+        
+        foreach (var envObj in envObjects)
         {
-            if (envCollider != null)
+            if (envObj != null)
             {
-                Physics2D.IgnoreCollision(_blockCollider, envCollider, ignore);
+                Collider2D envCollider = envObj.GetComponent<Collider2D>();
+                if (envCollider != null)
+                {
+                    Physics2D.IgnoreCollision(_blockCollider, envCollider, ignore);
+                }
             }
         }
-    }
-
-    private void OnDestroy()
-    {
-        ToggleEnvironmentCollisions(false);
     }
 }
