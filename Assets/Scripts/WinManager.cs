@@ -25,6 +25,13 @@ public class WinManager : MonoBehaviour
     public Transform bluePointLeft;  
     public Transform bluePointRight; 
 
+    [Header("Spawn Point")]
+    public Transform queueHolder; 
+
+    [Header("Initial Area")]
+    // 如果方块距离 QueueHolder 的距离小于这个值，说明它还没被拔出来，属于作弊/未准备状态
+    public float antiCheatRadius = 1.5f; 
+
     private Vector3 _lastLeftPosition;
     private Vector3 _lastRightPosition;
 
@@ -43,7 +50,7 @@ public class WinManager : MonoBehaviour
     {
         if (isGameWon) return;
 
-        Draggable[] allBlocks = FindObjectsOfType<Draggable>();
+        Draggable[] allBlocks = FindObjectsByType<Draggable>(FindObjectsSortMode.None);
 
         if (allBlocks.Length == 0)
         {
@@ -53,7 +60,33 @@ public class WinManager : MonoBehaviour
 
         bool isEverythingStationary = true;
 
-        if (bluePointLeft != null && bluePointRight != null)
+        // No stay in initial place
+        if (queueHolder != null)
+        {
+            foreach (var block in allBlocks)
+            {
+                if (block != null)
+                {
+                    float distToSpawn = Vector3.Distance(block.transform.position, queueHolder.position);
+                    
+                    if (distToSpawn < antiCheatRadius)
+                    {
+                        isEverythingStationary = false;
+                        
+                        _printCooldownTimer += Time.deltaTime;
+                        if (_printCooldownTimer >= 1.0f)
+                        {
+                            Debug.Log($"<color=#FFD700>⚠️ [Anti-Cheat] blocks around initial pos, 不开始倒计时！</color>");
+                            _printCooldownTimer = 0f;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        // check pointers
+        if (isEverythingStationary && bluePointLeft != null && bluePointRight != null)
         {
             float leftMoveDist = Vector3.Distance(bluePointLeft.position, _lastLeftPosition);
             float rightMoveDist = Vector3.Distance(bluePointRight.position, _lastRightPosition);
@@ -64,7 +97,7 @@ public class WinManager : MonoBehaviour
             }
         }
 
-        // check velocity
+        // check blocks
         if (isEverythingStationary)
         {
             foreach (var block in allBlocks)
@@ -81,6 +114,7 @@ public class WinManager : MonoBehaviour
             }
         }
 
+        // count down
         if (isEverythingStationary)
         {
             currentStableTimer += Time.deltaTime;
@@ -110,7 +144,6 @@ public class WinManager : MonoBehaviour
                 _printCooldownTimer = 0f;
             }
 
-            // win condition
             if (currentStableTimer >= requiredStableTime)
             {
                 TriggerWin();
@@ -119,7 +152,8 @@ public class WinManager : MonoBehaviour
         else
         {
             currentStableTimer = 0f;
-            _printCooldownTimer = 1.0f;
+            
+            if (_printCooldownTimer > 1.0f) _printCooldownTimer = 1.0f; 
             if (countdownText != null) countdownText.text = "";
         }
 
@@ -146,15 +180,21 @@ public class WinManager : MonoBehaviour
         if (countdownText != null) countdownText.text = "WIN!";
         Debug.Log("<color=yellow>WIN! Loading endscene...</color>");
 
-
         StartCoroutine(DelayAndChangeScene());
     }
 
     private IEnumerator DelayAndChangeScene()
     {
-        // wait 1s
         yield return new WaitForSeconds(delayBeforeSceneChange);
-
         SceneManager.LoadScene("EndScene");
+    }
+
+    void OnDrawGizmosSelected()
+    {
+        if (queueHolder != null)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(queueHolder.position, antiCheatRadius);
+        }
     }
 }

@@ -1799,6 +1799,8 @@ MonoBehaviour:
   blockVelocityThreshold: 0.05
   bluePointLeft: {fileID: 1474425569}
   bluePointRight: {fileID: 429771474}
+  queueHolder: {fileID: 267982925}
+  antiCheatRadius: 0.5
 --- !u!4 &1332670435
 Transform:
   m_ObjectHideFlags: 0
